@@ -9,11 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up(): void
+public function up()
 {
-   Schema::table('equipment_reports', function (Blueprint $table) {
-    $table->string('image')->nullable(); // ✅ stores image path
-});
+    Schema::table('equipment_reports', function (Blueprint $table) {
+        if (!Schema::hasColumn('equipment_reports', 'image')) {
+            $table->string('image')->nullable();
+        }
+    });
 }
 
 public function down(): void

@@ -96,17 +96,18 @@
     width: 100%;
     border-collapse: collapse;
     background-color: #ffffff;
-    color: #000000; /* All text black */
-    font-family: inherit; /* Keep your existing font */
+    color: #000000;
+    font-family: inherit;
 }
 
 /* Header cells */
 .booking-table th {
-    background-color: #f8f9fa; /* Light gray header */
-    color: #000000 !important; /* Header text black */
+    background-color: #f8f9fa;
+    color: #000000 !important;
     padding: 12px;
     text-align: left;
     border: 1px solid #dddddd;
+    white-space: nowrap;
 }
 
 /* Body rows */
@@ -119,9 +120,11 @@
 /* Table data cells */
 .booking-table td {
     background-color: #ffffff !important;
-    color: #000000 !important; /* Body text black */
+    color: #000000 !important;
     padding: 12px;
     border: 1px solid #dddddd;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
 /* Ensure links/icons inside cells remain black unless overridden */
@@ -130,11 +133,35 @@
     color: #000000;
 }
 
-/* Keep delete button red with white text */
-.booking-table button {
-    background-color: #e74c3c !important;
+/* Delete button — cantik & polished */
+.booking-table button,
+.booking-table .btn.btn-danger.btn-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
     color: #ffffff !important;
+    background-color: #e74c3c !important;
     border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 1px 3px rgba(231, 76, 60, 0.35);
+}
+
+.booking-table button:hover,
+.booking-table .btn.btn-danger.btn-sm:hover {
+    background-color: #c0392b !important;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.45);
+}
+
+.booking-table button:active,
+.booking-table .btn.btn-danger.btn-sm:active {
+    transform: scale(0.97);
+    background-color: #a93226 !important;
+    box-shadow: none;
 }
 </style>
 </head>
@@ -189,7 +216,7 @@
             <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #ff4d4d;">
                 <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
                 @csrf
             </form>
         </li>
@@ -204,15 +231,16 @@
 <table class="booking-table">
 
     <thead>
-        <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Trainer</th>
-            <th>Date & Time</th>
-            <th>Activity</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
+   <tr>
+    <th>ID</th>
+    <th>User</th>
+    <th>Trainer</th>
+    <th>Date</th>         
+    <th>Time</th>         
+    <th>Activity</th>
+    <th>Status</th>
+    <th>Actions</th>
+</tr>
     </thead>
 <tbody>
     @forelse($bookings as $booking)

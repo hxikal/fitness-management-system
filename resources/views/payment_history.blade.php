@@ -219,12 +219,12 @@
 <body>
 
         <nav>
-        <a href="{{ route('user.dashboard') }}" class="logo">
+        <a href="{{ route('userdashboard') }}" class="logo">
             <img src="{{ asset('image/gym.jpg') }}" alt="Logo">
             <span>Unique Plus Gym</span>
         </a>
         <ul>
-            <li><a href="{{ route('user.dashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+            <li><a href="{{ route('userdashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
             <li><a href="{{ route('membership.info') }}"><i class="fas fa-qrcode"></i> <span>Membership info</span></a></li> 
             <li><a href="{{ route('payment_history') }}"><i class="fas fa-file-invoice-dollar"></i> <span>Payment</span></a></li> 
             <li><a href="{{ route('equipment.report.index') }}"><i class="fas fa-tools"></i> <span>Equipment Report</span></a></li> 
@@ -255,123 +255,238 @@
             <p>Securely complete your gym registration.</p>
         </div>
 
-        <div class="payment-container">
-            <div class="card">
-                <h3><i class="fa fa-shield-halved icon-shield"></i> Secure Checkout</h3>
-                <form id="paymentForm">
-                    <div class="form-group">
-                        <label><i class="fa fa-dumbbell" style="color:var(--bg-dark)"></i> Membership Plan</label>
-                        <select id="membership_type" onchange="updateUI()">
-                            <option value="walkin" data-price="12.00">Walk-in Pass : General (RM 12.00), Student(RM 6.00)</option>
-                            <option value="monthly" data-price="85.00">Monthly Membership (RM 85.00), Student(RM63.00)</option>
-                            <option value="yearly" data-price="699.00">Annual Membership (RM 699.00), Student(RM 500.00)</option>
-                        </select>
-                    </div>
+ <div class="payment-container">
+    <!-- LEFT: Checkout Form -->
+    <div class="card">
+        <h3><i class="fa fa-shield-halved"></i> Secure Checkout</h3>
 
-                    <div class="form-group">
-                        <label>Select Payment Method</label>
-                        <div class="payment-methods">
-                            <div class="method-box active" onclick="selectMethod(this)">
-                                <i class="fa fa-university icon-bank"></i><br>Banking
-                            </div>
-                            <div class="method-box" onclick="selectMethod(this)">
-                                <i class="fa fa-wallet icon-wallet"></i><br>E-Wallet
-                            </div>
-                         
-                        </div>
-                    </div>
-
-                    <div class="price-display" id="display_price">auto</div>
-
-                    <button type="submit" class="btn-pay">
-                        <i class="fa fa-lock"></i> PAY NOW
-                    </button>
-                </form>
+        <!-- STEP 1: Plan & Method Selection -->
+        <div id="step1">
+            <div class="form-group">
+                <label><i class="fa fa-dumbbell"></i> Membership Plan</label>
+                <select id="membership_type" name="membership_type" onchange="updateUI()">
+                    <option value="walkin" data-price="12.00">Walk-in Pass  (RM 12.00), Student (RM6.00)</option>
+                    <option value="monthly" data-price="85.00">Monthly Membership (RM 85.00), Student (RM 60.00)</option>
+                    <option value="yearly" data-price="699.00">Annual Membership (RM 699.00), Student (RM500.00)</option>
+                </select>
             </div>
 
-            <div class="card">
-                <h3><i class="fa fa-receipt icon-receipt"></i> Order Summary</h3>
-                <div style="display:flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span style="color:#718096">Member:</span>
-                    <strong>{{ auth()->user()->name ?? 'Guest Member' }}</strong>
-                </div>
-                <div style="display:flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span style="color:#718096">Status:</span>
-                    <span style="color:var(--amber); font-weight: 700;">UNPAID</span>
-                </div>
-                <div style="display:flex; justify-content: space-between; margin-bottom: 15px;">
-                    <span style="color:#718096">Plan:</span>
-                    <strong id="summary_plan">Walk-in Pass</strong>
-                </div>
+            <input type="hidden" name="payment_method" id="payment_method_input" value="Maybank DuitNow QR">
 
-                <div class="summary-total" style="display:flex; justify-content: space-between;">
-                    <span>Total:</span>
-                    <span id="summary_total"></span>
-                </div>
-
-                <div style="margin-top:30px; font-size: 12px; color: #a0aec0; text-align: center;">
-                    <i class="fa fa-circle-check icon-shield"></i> 
-                    Pending Transaction
+     <div class="form-group">
+                <label>Available Payment Methods</label>
+                <div class="payment-methods">
+                    <div class="method-box">
+                        <i class="fa fa-university"></i><br>Maybank DuitNow QR
+                    </div>
+                    <div class="method-box">
+                        <i class="fa fa-wallet"></i><br>Touch 'n Go eWallet
+                    </div>
+                    <div class="method-box">
+                        <i class="fa fa-money-bill-transfer"></i><br>Maybank Online Transfer
+                    </div>
                 </div>
             </div>
+            <div class="price-display" id="display_price">RM 12.00</div>
+
+            <button class="btn-pay" onclick="proceedToQR()">
+                <i class="fa fa-lock"></i> PAY NOW
+            </button>
+        </div>
+
+        <!-- STEP 2: QR Code + Receipt Upload -->
+        <div id="step2" style="display:none;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <h4 style="color:#1a202c; font-size:18px; font-weight:700;">
+                    Scan QR to Pay
+                </h4>
+                <p style="color:#718096; font-size:13px;">
+                    Transfer to <strong>Unique Plus Gym</strong> and upload your receipt below.
+                </p>
+
+                <!-- YOUR GYM QR CODE IMAGE HERE -->
+                <div style="background:#f8fafc; border:2px dashed #10a37f; border-radius:15px; padding:20px; display:inline-block; margin:15px 0;">
+ <img src="{{ asset('image/paymentqr.jpeg') }}" 
+     alt="Payment QR Code"
+     style="
+        width:100%;
+        max-width:400px;
+        height:auto;
+        object-fit:contain;
+        display:block;
+        margin:auto;
+     "
+     onerror="this.style.display='none'; document.getElementById('qr_placeholder').style.display='block'">
+                    
+              <div id="qr_placeholder" style="display:none; width:220px; height:220px; background:#e2e8f0; border-radius:10px; align-items:center; justify-content:center; flex-direction:column;">
+    <i class="fa fa-qrcode" style="font-size:60px; color:#a0aec0;"></i>
+    <p style="color:#a0aec0; font-size:12px; margin-top:10px;">QR Code Here</p>
+</div>
+
+                <div style="background:#f0fff4; border-radius:10px; padding:15px; margin:10px 0; font-size:13px; color:#2d3748; text-align:left;">
+                    <p style="margin:4px 0;"><strong>Bank:</strong> Maybank / TNG / DuitNow</p>
+                    <p style="margin:4px 0;"><strong>Account:</strong> 551427167561</p>
+                    <p style="margin:4px 0;"><strong>Name:</strong> Unique Plus Gym Sdn Bhd</p>
+                    <p style="margin:4px 0; color:var(--success-green); font-weight:700;">
+                        Amount: <span id="qr_amount">RM 12.00</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Receipt Upload -->
+            <div class="form-group">
+                <label><i class="fa fa-upload"></i> Upload Payment Receipt</label>
+                <input type="file" id="receipt_file" accept="image/*,.pdf"
+                    style="width:100%; padding:10px; border:2px dashed #e2e8f0; border-radius:8px; cursor:pointer;">
+                <p style="font-size:11px; color:#a0aec0; margin-top:5px;">JPG, PNG or PDF. Max 5MB.</p>
+            </div>
+
+            <button class="btn-pay" onclick="submitReceipt()" id="uploadBtn">
+                <i class="fa fa-paper-plane"></i> SUBMIT RECEIPT
+            </button>
+
+            <button onclick="backToStep1()" 
+                style="width:100%; margin-top:10px; padding:12px; background:none; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; color:#718096;">
+                ← Back
+            </button>
+        </div>
+
+        <!-- STEP 3: Success -->
+        <div id="step3" style="display:none; text-align:center; padding:20px;">
+            <i class="fa fa-circle-check" style="font-size:60px; color:#10a37f;"></i>
+            <h3 style="color:#1a202c; margin-top:15px;">Receipt Submitted!</h3>
+            <p style="color:#718096;">Your payment is under review. Membership will be activated once approved.</p>
+            <div style="background:#f0fff4; border-radius:10px; padding:15px; margin:15px 0; text-align:left; font-size:13px;">
+                <p style="margin:4px 0;"><strong>Transaction ID:</strong> <span id="success_txn"></span></p>
+                <p style="margin:4px 0;"><strong>Plan:</strong> <span id="success_plan"></span></p>
+                <p style="margin:4px 0;"><strong>Amount:</strong> <span id="success_amount"></span></p>
+            </div>
+            <a href="{{ route('payment_history') }}" 
+               style="display:inline-block; margin-top:10px; padding:12px 25px; background:#10a37f; color:white; border-radius:10px; text-decoration:none; font-weight:700;">
+                View History
+            </a>
         </div>
     </div>
+<<!-- RIGHT: Order Summary -->
+    <div class="card">
+        <h3><i class="fa fa-receipt"></i> Order Summary</h3>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <span style="color:#718096">Member:</span>
+            <strong>{{ auth()->user()->name ?? 'Guest' }}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <span style="color:#718096">Status:</span>
+            <span style="color:var(--amber); font-weight:700;" id="order_status">UNPAID</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <span style="color:#718096">Plan:</span>
+            <strong id="summary_plan">Walk-in Pass</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <span style="color:#718096">Accepted Payment:</span>
+            <strong id="summary_payment_method" style="text-align:right;">Maybank DuitNow QR, Touch 'n Go eWallet, Maybank Online Transfer</strong>
+        </div>
+        <div class="summary-total" style="display:flex; justify-content:space-between;">
+            <span>Total:</span>
+            <span id="summary_total">RM 12.00</span>
+        </div>
+        <div style="margin-top:30px; font-size:12px; color:#a0aec0; text-align:center;">
+            <i class="fa fa-circle-check"></i> Pending Transaction
+        </div>
+    </div>
+</div>
+<script>
+let selectedMethod = 'Banking';
+let currentPaymentId = null;
 
-    
+function updateUI() {
+    const select = document.getElementById('membership_type');
+    const opt    = select.options[select.selectedIndex];
+    const price  = opt.getAttribute('data-price');
+    const plan   = opt.text.split(' (')[0];
 
-   <script>
-    // 1. Function to handle selection of payment method
-    function selectMethod(el) {
-        document.querySelectorAll('.method-box').forEach(box => box.classList.remove('active'));
-        el.classList.add('active');
-    }
+    document.getElementById('display_price').innerText  = 'RM ' + price;
+    document.getElementById('summary_total').innerText  = 'RM ' + price;
+    document.getElementById('summary_plan').innerText   = plan;
+}
 
-    // 2. Function to update UI details
-    function updateUI() {
-        const select = document.getElementById('membership_type');
-        // Get selected option
-        const selectedOption = select.options[select.selectedIndex];
-        
-        // Extract values
-        const price = selectedOption.getAttribute('data-price');
-        // Extract text before the first parenthesis
-        const planName = selectedOption.text.split(' (')[0];
-        
-        // Apply values to the DOM
-        document.getElementById('display_price').innerText = "RM " + price;
-        document.getElementById('summary_total').innerText = "RM " + price;
-        document.getElementById('summary_plan').innerText = planName;
-    }
+function proceedToQR() {
+    const select = document.getElementById('membership_type');
+    const opt    = select.options[select.selectedIndex];
+    const price  = opt.getAttribute('data-price');
+    const plan   = select.value;
 
-    // 3. Initialize on page load so it's not "auto"
-    window.addEventListener('DOMContentLoaded', (event) => {
-        updateUI();
+    fetch("{{ route('payment.pay') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ plan: plan, amount: price, method: selectedMethod })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentPaymentId = data.payment_id;
+            document.getElementById('qr_amount').innerText  = 'RM ' + data.amount;
+            document.getElementById('order_status').innerText = 'PENDING';
+            document.getElementById('order_status').style.color = '#d97706';
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+        } else {
+            alert('Something went wrong. Please try again.');
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+
+function submitReceipt() {
+    const file = document.getElementById('receipt_file').files[0];
+    if (!file) { alert('Please select a receipt file.'); return; }
+    if (!currentPaymentId) { alert('No payment found. Please try again.'); return; }
+
+    const form = new FormData();
+    form.append('receipt', file);
+    form.append('payment_id', currentPaymentId);
+    form.append('_token', '{{ csrf_token() }}');
+
+    document.getElementById('uploadBtn').innerText = 'Uploading...';
+    document.getElementById('uploadBtn').disabled  = true;
+
+    fetch("{{ route('payment.upload.receipt') }}", {
+        method: 'POST',
+        body: form
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const select = document.getElementById('membership_type');
+            const opt    = select.options[select.selectedIndex];
+
+            document.getElementById('success_txn').innerText    = 'TXN-' + currentPaymentId;
+            document.getElementById('success_plan').innerText   = opt.text.split(' (')[0];
+            document.getElementById('success_amount').innerText = document.getElementById('qr_amount').innerText;
+
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step3').style.display = 'block';
+        } else {
+            alert('Upload failed. Please try again.');
+        }
+    })
+    .catch(() => alert('Upload error. Please try again.'))
+    .finally(() => {
+        document.getElementById('uploadBtn').innerText = 'SUBMIT RECEIPT';
+        document.getElementById('uploadBtn').disabled  = false;
     });
+}
 
-    // 4. Payment Submission logic
-    document.getElementById('paymentForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+function backToStep1() {
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step1').style.display = 'block';
+}
 
-        const plan = document.getElementById('membership_type').value;
-        // Ensure we handle cases where price might still be empty
-        const priceElement = document.getElementById('display_price').innerText;
-        const price = priceElement.replace('RM ', '');
-        const method = document.querySelector('.method-box.active').innerText.trim();
-
-        fetch('/api/payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ plan, amount: price, method })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert("Payment Response: " + JSON.stringify(data));
-        })
-        .catch(error => console.error('Error:', error));
-    });
+// Init on load
+updateUI();
 </script>
 </body>
 </html>

@@ -195,12 +195,12 @@ th:nth-child(7), td:nth-child(7) { width: 13%; }
 <body>
 
      <nav>
-        <a href="{{ route('user.dashboard') }}" class="logo">
+        <a href="{{ route('userdashboard') }}" class="logo">
             <img src="{{ asset('image/gym.jpg') }}" alt="Logo">
             <span>Unique Plus Gym</span>
         </a>
         <ul>
-            <li><a href="{{ route('user.dashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+            <li><a href="{{ route('userdashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
             <li><a href="{{ route('membership.info') }}"><i class="fas fa-qrcode"></i> <span>Membership info</span></a></li> 
             <li><a href="{{ route('payment_history') }}"><i class="fas fa-file-invoice-dollar"></i> <span>Payment History</span></a></li> 
             <li><a href="{{ route('equipment.report.index') }}"><i class="fas fa-tools"></i> <span>Equipment Report</span></a></li> 

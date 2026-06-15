@@ -12,9 +12,15 @@ return new class extends Migration
 public function up()
 {
     Schema::table('users', function (Blueprint $table) {
-        $table->dateTime('membership_start')->nullable();
-        $table->dateTime('membership_expiry')->nullable();
-        $table->boolean('is_active')->default(0);
+        if (!Schema::hasColumn('users', 'membership_start')) {
+            $table->dateTime('membership_start')->nullable();
+        }
+        if (!Schema::hasColumn('users', 'membership_expiry')) {
+            $table->dateTime('membership_expiry')->nullable();
+        }
+        if (!Schema::hasColumn('users', 'is_active')) {
+            $table->boolean('is_active')->default(0);
+        }
     });
 }
 

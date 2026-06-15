@@ -14,7 +14,7 @@
 
 <style>
         body {
-            background-color: #e0e0e0; /* Silver */
+            background-color: #32CD32;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,7 +34,7 @@
         }
 
         h1 {
-            color: #800000; /* Maroon */
+            color: black;
             margin-bottom: 25px;
             font-size: 1.8em;
         }
@@ -47,7 +47,7 @@
         label {
             display: block;
             font-weight: 600;
-            color: #800000;
+            color: green;
             margin-bottom: 8px;
             font-size: 14px;
         }
@@ -64,8 +64,8 @@
         .update-btn {
             width: 100%;
             padding: 16px;
-            background-color: #800000;
-            color: #ffd700; /* Gold */
+            background-color: black;
+            color: white; 
             border: none;
             border-radius: 8px;
             font-weight: 800;
@@ -75,8 +75,8 @@
         }
 
         .update-btn:hover {
-            background-color: #ffd700;
-            color: #800000;
+            background-color: green;
+            color: white;
         }
     </style>
 </head>

@@ -159,7 +159,7 @@
         </a>
      
         <ul>
-            <li><a href="{{ route('user.dashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+            <li><a href="{{ route('userdashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
             <li><a href="{{ route('membership.info') }}"><i class="fas fa-qrcode"></i> <span>Membership info</span></a></li> 
             <li><a href="{{ route('payment_history') }}"><i class="fas fa-file-invoice-dollar"></i> <span>Payment History</span></a></li> 
             <li><a href="{{ route('equipment.report.index') }}"><i class="fas fa-tools"></i> <span>Equipment Report</span></a></li> 
@@ -196,33 +196,25 @@
     <div class="qr-container" style="background: black; padding: 40px; text-align: center; border-radius: 15px; color: white;">
         
         <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block;">
-    <img 
-        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode(url('/admin/member/scan/' . Auth::user()->id)) }}"
-        alt="QR Code"
-        style="width:180px;">
+   <img 
+  src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode(route('member.verify', Auth::user()->id)) }}"
+    alt="QR Code"
+    style="width:180px;">
 </div>
 
         <h3 style="margin: 0;">ID: PNP-{{ str_pad(Auth::user()->id, 5, '0', STR_PAD_LEFT) }}</h3>
 
-        <div style="margin-top: 20px;">
-            {{-- We check strictly for 1. If it's 0 or NULL, it shows NOT ACTIVE --}}
-            @if(Auth::user()->is_active == 0)
+    <div style="margin-top: 20px;">
+            {{-- We check strictly for 1. If it's 1, it shows ACTIVE --}}
+            @if(Auth::user()->is_active == 1)
                 <span style="background: #27ae60; padding: 8px 20px; border-radius: 20px; font-weight: bold;">
-                    <i class="fas fa-check-circle"></i> STATUS: NOT ACTIVE
+                    <i class="fas fa-check-circle"></i> STATUS: ACTIVE
                 </span>
-
-                <div style="margin-top: 25px;">
-                   
-<a href="{{ route('payment_history') }}" 
-   style="background:#27ae60; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold;">
-   PROCEED TO PAYMENT <i class="fas fa-arrow-right"></i>
-</a>
-                </div>
             @else
                 <span style="background: #e74c3c; padding: 8px 20px; border-radius: 20px; font-weight: bold;">
                     <i class="fas fa-times-circle"></i> STATUS: NOT ACTIVE
                 </span>
-                
+
                 <div style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.3);">
                     <p style="font-size: 14px; line-height: 1.6; margin-bottom: 10px; color: #ffeb3b;">
                         <strong>Verification Required</strong>
@@ -231,6 +223,13 @@
                     Please show this QR code to the gym owner for record verification. 
                     The payment button will only appear after your account is activated by the management.
                     </p>
+                </div>
+
+                <div style="margin-top: 25px;">
+<a href="{{ route('payment_history') }}" 
+   style="background:#27ae60; color:white; padding:10px 20px; border-radius:5px; text-decoration:none; font-weight:bold;">
+   PROCEED TO PAYMENT <i class="fas fa-arrow-right"></i>
+</a>
                 </div>
             @endif
         </div>

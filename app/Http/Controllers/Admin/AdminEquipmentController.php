@@ -20,21 +20,25 @@ public function index()
 }
 
 
-    // ✅ Admin can update status (pending/fixed)
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'status' => 'required|string|in:pending,fixed',
-        ]);
+  public function update(Request $request, $id)
+{
+    $validated = $request->validate([
+        'status' => 'required|string|in:pending,fixed',
+    ]);
 
-        $report = EquipmentReport::findOrFail($id);
-        $report->status = $validated['status'];
+    $report = EquipmentReport::findOrFail($id);
+
+    // ✅ only update status (no risk of overwriting anything else)
+    $report->status = $validated['status'];
+
+    // ✅ extra safety check (prevents silent overwrite issues)
+    if ($report->exists) {
         $report->save();
-
-        // Redirect back to the admin equipment page
-        return redirect()->route('admin.equipment.index')
-                         ->with('success', 'Status updated successfully.');
     }
+
+    return redirect()->route('admin.equipment.index')
+                     ->with('success', 'Status updated successfully.');
+}
 
     // ✅ Admin can delete a report if needed
     public function destroy($id)

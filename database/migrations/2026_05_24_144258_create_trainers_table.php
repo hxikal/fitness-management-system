@@ -9,16 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
+public function up()
+{
+    if (!Schema::hasTable('trainers')) {
         Schema::create('trainers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');              // Trainer name
-            $table->string('email')->unique();   // Unique email for login
-            $table->string('password');          // Hashed password
-            $table->timestamps();                // Created_at & updated_at
+            $table->string('name');
+            $table->string('email');
+            $table->string('password');
+            $table->timestamps();
         });
     }
+}
 
     /**
      * Reverse the migrations.

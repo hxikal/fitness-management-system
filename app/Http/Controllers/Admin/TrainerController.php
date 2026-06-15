@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class TrainerController extends Controller
 {
+
+public function index()
+{
+    $trainers = Trainer::all();
+    return view('trainer.index', compact('trainers')); // ✅ changed from trainer.sessions
+}
+
   public function destroy($id)
 {
     $trainer = \App\Models\Trainer::findOrFail($id);

@@ -9,112 +9,135 @@ use Illuminate\Support\Facades\Auth;
 
 class TrainerSessionController extends Controller
 {
-    // Show calendar with sessions
+    // Trainer dashboard
     public function index()
     {
-        $sessions = TrainerBooking::where('trainer_name', Auth::user()->name)
-                                  ->orderBy('booking_date', 'asc')
-                                  ->get();
+        $trainer = Auth::guard('trainer')->user();
 
-        return view('trainer.session.index', compact('sessions'));
+        $sessions = TrainerBooking::where('trainer_name', $trainer?->name)
+            ->orderBy('booking_date', 'asc')
+            ->get();
+
+        return view('trainer.index', compact('sessions'));
     }
 
- public function getEvents()
+    // Trainer events (for trainer calendar/table)
+    public function getEvents()
+    {
+        $trainer = Auth::guard('trainer')->user();
+
+        $sessions = TrainerSession::where('trainer_id', $trainer->id)->get();
+
+        return response()->json(
+            $sessions->map(function ($session) {
+                return [
+                    'id'    => $session->id,
+                    'title' => $session->activity,
+                    'start' => $session->session_date . 'T' . $session->start_time,
+                    'end'   => $session->session_date . 'T' . $session->end_time,
+                    'allDay'=> false,
+                    'color' => '#2ecc71',
+                ];
+            })
+        );
+    }
+
+    // Trainer events (simple version)
+    public function getMyEvents()
+    {
+        $trainer = Auth::guard('trainer')->user();
+
+        $sessions = TrainerSession::where('trainer_id', $trainer->id)->get();
+
+        return response()->json(
+            $sessions->map(function ($session) {
+                return [
+                    'title' => $session->activity,
+                    'start' => $session->session_date . 'T' . $session->start_time,
+                    'end'   => $session->session_date . 'T' . $session->end_time,
+                ];
+            })
+        );
+    }
+
+    // User view: availability slots by trainer name
+    public function getUserAvailableSlots($trainerName)
+    {
+        $sessions = TrainerSession::where('trainer_name', $trainerName)->get();
+
+        return response()->json(
+            $sessions->map(function ($session) {
+                return [
+                    'title'  => $session->activity,
+                    'start'  => $session->session_date . 'T' . $session->start_time,
+                    'end'    => $session->session_date . 'T' . $session->end_time,
+                    'allDay' => false,
+                    'color'  => '#3182ce',
+                ];
+            })
+        );
+    }
+
+    // Store availability (trainer adds slot)
+   public function storeAvailability(Request $request)
 {
-    $sessions = TrainerSession::all();
+    $trainer = Auth::guard('trainer')->user();
 
-    $events = $sessions->map(function ($session) {
-        return [
-            'id'     => $session->id,  // ← tambah ni
-            'title'  => 'Availability: ' . $session->activity,
-            'start'  => $session->session_date . 'T' . $session->session_time,
-            'allDay' => false,
-            'color'  => '#2ecc71'
-        ];
-    });
-
-    return response()->json($events);
-}
-
-public function getMyEvents()
-{
-    $sessions = TrainerSession::where('trainer_name', Auth::user()->name)->get();
-
-    $events = $sessions->map(function ($session) {
-        return [
-            'id'     => $session->id,  // penting untuk delete!
-            'title'  => $session->activity,
-            'start'  => $session->session_date . 'T' . $session->session_time,
-            'allDay' => false,
-            'color'  => '#2ecc71'
-        ];
-    });
-
-    return response()->json($events);
-}
-
-   public function getUserAvailableSlots($trainerName)
-{
-    $formattedName = str_replace('-', ' ', $trainerName);
-
-    $sessions = TrainerSession::where('trainer_name', $formattedName)
-        ->get();
-
-    $events = $sessions->map(function ($session) {
-        return [
-            'title'  => 'Availability: ' . $session->activity,
-            'start'  => $session->session_date . 'T' . $session->session_time,
-            'allDay' => false,
-            'color'  => '#3182ce'
-        ];
-    });
-
-    return response()->json($events);
-}
-
-    public function storeAvailability(Request $request)
-{
-    $request->validate([
-        'trainer_name' => 'required|string',
-        'session_date' => 'required|date',
-        'session_time' => 'required',
-        'activity'     => 'required|string',
-        'status'       => 'required|string',
+    $session = TrainerSession::create([
+        'trainer_id'   => $trainer->id,
+        'trainer_name' => $trainer->name,
+        'session_date' => $request->session_date,
+        'start_time'   => $request->start_time,
+        'end_time'     => $request->end_time,
+        'activity'     => $request->activity,
+        'status'       => 'available',
     ]);
 
-    TrainerSession::create($request->all());
-
-    return response()->json(['success' => true]);
+    return response()->json([
+        'success' => true,
+        'message' => 'Availability stored',
+        'data'    => $session
+    ]);
 }
 
-public function getAllTrainerAvailability()
+
+    // User view: trainer availability with props
+    public function getTrainerAvailability($trainerName)
+    {
+        $sessions = TrainerSession::where('trainer_name', $trainerName)->get();
+
+        return response()->json(
+            $sessions->map(function ($session) {
+                return [
+                    'title' => $session->activity,
+                    'start' => $session->session_date . 'T' . $session->start_time,
+                    'end'   => $session->session_date . 'T' . $session->end_time,
+                    'extendedProps' => [
+                        'trainer_name' => $session->trainer_name,
+                        'status'       => $session->status,
+                    ],
+                ];
+            })
+        );
+    }
+
+    // Delete availability (trainer)
+   public function destroyAvailability($id)
 {
-    $sessions = TrainerSession::all();
+    $trainer = Auth::guard('trainer')->user();
 
-    $events = $sessions->map(function ($session) {
-        return [
-            'title'  => $session->activity,
-            'start'  => $session->session_date . 'T' . $session->session_time,
-            'allDay' => false,
-            'color'  => '#2ecc71',
-            'extendedProps' => [
-                'trainer_name' => $session->trainer_name,
-                'status'       => $session->status,
-            ]
-        ];
-    });
+    $session = TrainerSession::where('id', $id)
+        ->where('trainer_id', $trainer->id)
+        ->firstOrFail();
 
-    return response()->json($events);
-}
-
-public function destroyAvailability($id)
-{
-    $session = TrainerSession::findOrFail($id);
     $session->delete();
 
-    return response()->json(['success' => true]);
+    return response()->json([
+        'success' => true,
+        'message' => 'Availability deleted successfully'
+    ]);
 }
-
+    // Store (manual insert, e.g. admin form)
     public function store(Request $request)
     {
         $request->validate([
@@ -124,23 +147,48 @@ public function destroyAvailability($id)
             'activity'     => 'required|string|max:255',
         ]);
 
-        TrainerBooking::create([
-            'trainer_name' => $request->trainer_name,
-            'booking_date' => $request->date,
-            'booking_time' => $request->time,
-            'activity'     => $request->activity,
-            'status'       => 'Confirmed',
+        TrainerSession::create([
+            'trainer_name'  => $request->trainer_name,
+            'session_date'  => $request->date,
+            'start_time'    => $request->time, // guna start_time
+            'end_time'      => $request->time, // kalau admin form hanya ada satu time, boleh duplicate
+            'activity'      => $request->activity,
+            'status'        => 'available',
         ]);
 
         return redirect()->route('trainer.session.index')
-                         ->with('success', 'Session created successfully!');
+            ->with('success', 'Session created successfully!');
     }
 
+    // Delete (manual)
     public function destroy($id)
-{
-    $session = TrainerSession::findOrFail($id);
-    $session->delete();
+    {
+        $session = TrainerSession::findOrFail($id);
+        $session->delete();
 
-    return response()->json(['success' => true]);
+        return response()->json(['success' => true]);
+    }
+
+    public function getAvailabilityTable()
+{
+    $trainer = Auth::guard('trainer')->user();
+
+    $sessions = TrainerSession::where('trainer_id', $trainer->id)
+        ->orderBy('session_date', 'asc')
+        ->get();
+
+    return response()->json(
+        $sessions->map(function ($session) {
+            return [
+                'id'           => $session->id,
+                'trainer_name' => $session->trainer_name,
+                'activity'     => $session->activity,
+                'date'         => $session->session_date,
+                'start_time'   => date('h:i A', strtotime($session->start_time)),
+                'end_time'     => date('h:i A', strtotime($session->end_time)),
+                'status'       => $session->status,
+            ];
+        })
+    );
 }
 }

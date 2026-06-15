@@ -144,7 +144,7 @@
     <ul>
         <li><a href="{{ route('trainer.dashboard') }}"><i class="fa fa-home"></i> Dashboard</a></li>
         <li><a href="{{ route('trainer.session.index') }}"><i class="fa fa-calendar"></i> My Sessions</a></li>
-        <li><a href="{{ route('trainer.profile') }}"><i class="fa fa-user"></i> My Profile</a></li>
+       <li><a href="/trainer/profile"><i class="fa fa-user"></i> My Profile</a></li>
     
               <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
@@ -172,7 +172,7 @@
 
     @if($errors->any())
         <div style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 12px 15px; border-radius: 6px; margin-bottom: 15px; font-family: sans-serif; font-size: 14px; max-width: 600px; box-sizing: border-box;">
-            <strong style="display: block; margin-bottom: 5px;">Sila betulkan ralat berikut:</strong>
+            <strong style="display: block; margin-bottom: 5px;">fix the issue below:</strong>
             <ul style="margin: 0; padding-left: 20px;">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -209,7 +209,7 @@
     </div>
 
     <div style="display: flex; flex-direction: column; gap: 6px;">
-        <label style="font-weight: 700; font-size: 15px; color: #000000; font-family: sans-serif;">Muat Naik Gambar Profil</label>
+        <label style="font-weight: 700; font-size: 15px; color: #000000; font-family: sans-serif;">Upload Profile Image</label>
         
         <div id="upload-wrapper-default" style="background-color: #ffffff; width: 100%; padding: 10px 12px; border: 1px solid rgba(0,0,0,0.2); border-radius: 6px; box-sizing: border-box; display: flex; align-items: center;">
             <input type="file" 
@@ -225,7 +225,7 @@
                     FILE
                 </span>
                 <span id="file-name-text" style="font-size: 14px; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: sans-serif;">
-                    Nama_Fail.png
+                    file_name.png
                 </span>
             </div>
             <button type="button" id="btn-remove-file" 

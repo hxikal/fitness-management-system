@@ -112,6 +112,7 @@
       <img src="{{ asset('image/gym.jpg') }}" alt="Logo" class="logo-img">
     </div>
 
+
     <div class="container" style="padding-top: 20px;"> 
       <label for="roleSelector"><b>Login As</b></label>
       <select name="role" id="roleSelector" required>

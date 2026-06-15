@@ -22,7 +22,7 @@
         }
 
         body {
-            background:#3cd070;
+            background: #7FFF00;
             font-family: var(--font-main);
             margin: 0;
             display: flex;
@@ -189,7 +189,7 @@
             <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #ff4d4d;">
                 <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
                 @csrf
             </form>
         </li>
@@ -207,16 +207,16 @@
 
             <div class="table-container" style="overflow-x: auto; margin-top: 15px;">
                 <table style="width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 900px;">
-                    <thead>
-                        <tr style="text-align: center; border-bottom: 2px solid #f1f1f1; background: #fafafa;">
-                            <th style="padding: 15px 10px; width: 60px; text-align: center;">ID</th>
-                            <th style="padding: 15px 10px; width: 180px; text-align: left;">Name</th>
-                            <th style="padding: 15px 10px; width: 180px; text-align: center;">Identity Verification</th>
-                            <th style="padding: 15px 10px; width: 120px; text-align: center;">Type</th>
-                            <th style="padding: 15px 10px; width: 120px; text-align: center;">Status</th>
-                            <th style="padding: 15px 10px; width: 220px; text-align: center;">Actions</th>
-                        </tr>
-                    </thead>
+<thead>
+    <tr style="text-align: center; border-bottom: 2px solid #f1f1f1; background: #fafafa;">
+        <th style="padding: 15px 10px; width: 50px; text-align: center;">ID</th>
+        <th style="padding: 15px 10px; width: 150px; text-align: left;">Name</th>
+        <th style="padding: 15px 10px; width: 160px; text-align: center;">Identity Verification</th>
+        <th style="padding: 15px 10px; width: 100px; text-align: center;">Type</th>
+        <th style="padding: 15px 10px; width: 100px; text-align: center;">Status</th>
+        <th style="padding: 15px 10px; width: 200px; text-align: center;">Actions</th>
+    </tr>
+</thead>
                     <tbody>
                         @forelse($members as $member)
                         <tr style="border-bottom: 1px solid #eee; text-align: center; vertical-align: middle;">
@@ -289,7 +289,7 @@
                                     </span>
                                 @endif
                             </td>
-
+                           
                             <td style="padding: 15px 10px; text-align: center; vertical-align: middle;">
                                 @if($member->is_active)
                                     <span class="badge-success" style="padding:4px 8px; font-size:11px; font-weight:600; display:inline-block; min-width: 70px;">Active</span>
@@ -298,15 +298,7 @@
                                         Not Active
                                     </span>
                                 @endif
-                            </td>
-<td style="padding: 15px 10px; text-align: center; vertical-align: middle;">
-<form method="POST" action="/members/{{ $member->id }}/verify" style="display:inline;">
-    @csrf
-    <button style="background:#10a37f; color:white; padding:3px 5px; border:none; border-radius:3px;">
-        VERIFY
-    </button>
-</form>
-</td>
+                                
                             <td style="padding: 15px 10px; text-align: center; vertical-align: middle;">
                                 <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: center;">
                                     <button onclick="alert(`Membership Start: {{ $member->membership_start ?? 'Not yet activated' }}\nMembership Expiry: {{ $member->membership_expiry ?? 'Not yet activated' }}`)"
@@ -315,6 +307,8 @@
                                             onmouseout="this.style.background='#10a37f';">
                                         <i class="fas fa-info-circle"></i> Info
                                     </button>
+
+                                    
                                     
                                     <form action="{{ route('admin.members.delete', $member->id) }}" method="POST" style="margin: 0; display: inline;" onsubmit="return confirm('Delete this member?')">
                                         @csrf
@@ -327,6 +321,19 @@
                                     </form>
                                 </div>
                             </td>
+
+                            <td style="vertical-align: middle; text-align: center; white-space: nowrap;">
+    @if(!$member->is_active)
+   <form action="{{ route('admin.members.activate', $member->id) }}" method="POST">
+    @csrf
+    <button type="submit" class="btn btn-success">
+        Activate
+    </button>
+</form>
+    @else
+        <span class="badge badge-success">Active</span>
+    @endif
+</td>
                         </tr>
                         @empty
                         <tr>
@@ -340,12 +347,6 @@
     </div> 
 
 
-    <script>
-
-<button onclick="toggleScanner()" style="padding:10px 15px;">
-    Open QR Scanner
-</button>
-
-    </script>
+    
 </body>
 </html>

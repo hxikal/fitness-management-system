@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TrainerBooking; // Kept if needed elsewhere
+use App\Models\TrainerBooking; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter; 
+use Illuminate\Support\Str;
 use App\Models\Trainer; // Make sure this matches your actual Trainer model filename
 
 class TrainerAuthController extends Controller
 {
     public function showLoginForm()
     {
-        return view('trainer.login'); // Blade view for trainer login
+        return view('trainer.login'); 
     }
 
    public function login(Request $request)
@@ -22,17 +24,35 @@ class TrainerAuthController extends Controller
         'password' => 'required',
     ]);
 
+    // 1. Check Rate Limiter
+    $throttleKey = Str::lower($request->input('email')).'|'.$request->ip();
+
+    if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+        $seconds = RateLimiter::availableIn($throttleKey);
+        $minutes = ceil($seconds / 60);
+
+        return back()->withInput()->withErrors([
+            'login_error' => "Too many login attempts. Please try again in {$minutes} minutes.",
+        ]);
+    }
+
     // Attempt to log the trainer in using the custom guard
     if (Auth::guard('trainer')->attempt($credentials)) {
+        // 2. Clear on Success
+        RateLimiter::clear($throttleKey);
+
         $request->session()->regenerate();
 
         // ✅ FIX: Force the redirect to go straight to the trainer dashboard!
         return redirect()->route('trainer.dashboard');
     }
 
+    // 3. Increment Failures on Failure (900 seconds = 15 mins)
+    RateLimiter::hit($throttleKey, 900);
+
     // If it fails, send them back to the login form with an error
-    return back()->withErrors([
-        'email' => 'The provided credentials do not match our records.',
+    return back()->withInput()->withErrors([
+        'login_error' => 'The email or password is wrong.',
     ]);
 }
 

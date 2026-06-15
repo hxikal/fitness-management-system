@@ -11,10 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // This registers both nicknames for use in your web.php routes
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
             'role'    => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'logout',
+            'admin/logout',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

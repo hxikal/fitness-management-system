@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 class AdminMembershipController extends Controller
 {
@@ -33,35 +35,56 @@ class AdminMembershipController extends Controller
 ));
     }
 
+  public function scanMember($id)
+{
+    $member = User::findOrFail($id);
+
+    // Semak ada payment Paid
+    $hasPaidPayment = \App\Models\Payment::where('user_id', $id)
+                        ->where('status', 'Paid')
+                        ->exists();
+
+    if ($hasPaidPayment && $member->is_active != 1) {
+        // Aktifkan membership semasa scan
+        $member->update([
+            'is_active'          => 1,
+            'membership_expiry'  => now()->addMonth(),
+         
+        ]);
+    }
+
+    $isActive = $member->fresh()->is_active == 1
+                && $member->fresh()->membership_expiry >= now()->toDateString();
+
+    return view('admin.scan-result', compact('member', 'isActive'));
+}
+
     // Verify membership (activate manually)
-    public function verify(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-        
-        // SINKRONISASI PINTAR: Jika status diaktifkan manual tetapi jenis kosong, kekalkan walk-in atau selaraskan ikut logik sistem
-        $updateData = ['is_active' => 1];
-        if (empty($user->type)) {
-            $updateData['type'] = 'walk-in';
-        }
-        
-        $user->update($updateData);
+public function verify($id)
+{
+    $user = User::findOrFail($id);
 
-        return back()->with('success', 'Verified');
+    $user->is_active = 1;
+    $user->membership_start = now();
+
+    $type = strtolower(trim($user->type ?? ''));
+
+    if ($type === 'monthly') {
+        $user->membership_expiry = now()->addMonth();
+    } elseif ($type === 'annually' || $type === 'annual') {
+        $user->membership_expiry = now()->addYear();
+    } else {
+        // empty type, or walk-in
+        $user->type = 'walk-in';
+        $user->membership_expiry = now()->endOfDay();
     }
 
-       public function verifyMember($id)
-    {
-        $user = User::findOrFail($id);
+    $user->save();
 
-        if ($user->is_active == 1) {
-        return back()->with('success', 'Already Active');
-    }
+    return back()->with('success', 'Verified');
+}
 
-        $user->is_active = 1;
-        $user->save();
 
-        return back()->with('success', 'Member Activated');
-    }
 
     // Delete membership
     public function delete($id)
@@ -80,7 +103,7 @@ class AdminMembershipController extends Controller
         $member->membership_start = now();
         
         // PEMBAIKAN UTAMA: Kemas kini tarikh luput secara dinamik mengikut jenis keahlian yang didaftarkan
-        $memberType = strtolower(trim($member->type));
+        $memberType = strtolower(trim($member->type ?? ''));
         
         if ($memberType === 'monthly') {
             $member->membership_expiry = now()->addMonth();
@@ -108,7 +131,7 @@ class AdminMembershipController extends Controller
         $member->membership_start = now();
 
         // PEMBAIKAN UTAMA: Tambah sokongan pelan 'annually' semasa pembaharuan (Renew) dibuat
-        $memberType = strtolower(trim($member->type));
+        $memberType = strtolower(trim($member->type ?? ''));
 
         if ($memberType === 'monthly') {
             $member->membership_expiry = now()->addDays(30);

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Trainer; // <-- Pastikan nama Model database anda betul
 use App\Models\AdminTrainer;
 
+
 class AdminTrainerController extends Controller
 {
     public function index()

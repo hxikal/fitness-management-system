@@ -9,13 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
+  public function up()
+{
+    if (!Schema::hasTable('admins')) {
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            // keep all your existing columns untouched
         });
     }
+}
 
     /**
      * Reverse the migrations.

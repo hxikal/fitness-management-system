@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Trainer Sessions</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -215,91 +218,213 @@
             <h1>My Sessions</h1>
             <p>Manage and track your upcoming trainee training sessions.</p>
         </div>
-<div class="calendar-container">
-    <div id="calendar"></div>
+
+<div class="availability-form" style="background:#fff; padding:20px; border-radius:8px; max-width:600px; margin:20px auto;">
+    <h3 style="color:#333;">Add Availability</h3>
+    <form id="addAvailabilityForm" method="POST" action="/trainer/availability">
+        @csrf
+        
+        <label>Activity:</label>
+        <input type="text" name="activity" required 
+               style="width:100%; padding:8px; margin:5px 0; border:1px solid #ccc; border-radius:4px;">
+        
+        <label>Date:</label>
+        <input type="date" name="session_date" required 
+               style="width:100%; padding:8px; margin:5px 0; border:1px solid #ccc; border-radius:4px;">
+        
+        <label>Start Time:</label>
+        <input type="time" name="start_time" required 
+               style="width:100%; padding:8px; margin:5px 0; border:1px solid #ccc; border-radius:4px;">
+        
+        <label>End Time:</label>
+        <input type="time" name="end_time" required 
+               style="width:100%; padding:8px; margin:5px 0; border:1px solid #ccc; border-radius:4px;">
+        
+        <button type="submit" 
+                style="background:#3182ce; color:#fff; padding:10px 20px; border:none; border-radius:4px; cursor:pointer;">
+            Save
+        </button>
+    </form>
 </div>
-<script>
-const trainerName = "{{ Auth::user()->name ?? '' }}";
-</script>
-<script src="{{ asset('js/calendar.js') }}"></script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
+<div id="userCalendar" style="max-width: 100%; margin: 20px auto; padding: 24px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+    <h3 style="font-family: sans-serif; color: #1a1a1a; margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; font-weight: 700;">My Availability</h3>
     
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        editable: true,
-        selectable: true,
-        selectMirror: true,
+    <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-family: sans-serif; text-align: left; background: #ffffff; white-space: nowrap; table-layout: fixed;" cellpadding="14">
+            <thead>
+                <tr style="background: #111111; color: #ffffff;">
+                    <th style="border: 1px solid #111111; padding: 16px 20px; font-weight: 600; font-size: 0.95rem; width: 20%;">Trainer</th>
+                    <th style="border: 1px solid #111111; padding: 16px 20px; font-weight: 600; font-size: 0.95rem; width: 25%;">Activity</th>
+                    <th style="border: 1px solid #111111; padding: 16px 20px; font-weight: 600; font-size: 0.95rem; width: 15%;">Date</th>
+                    <th style="border: 1px solid #111111; padding: 16px 20px; font-weight: 600; font-size: 0.95rem; width: 20%;">Time</th>
+                    <th style="border: 1px solid #111111; padding: 16px 20px; font-weight: 600; font-size: 0.95rem; width: 20%;">Status</th>
+                </tr>
+            </thead>
 
- select: function(arg) {
-    var title = prompt('Enter Session Title:');
-    if (title) {
-        var dateStr = arg.startStr.split("T")[0];
-        var timeStr = arg.startStr.split("T")[1] 
-            ? arg.startStr.split("T")[1].substring(0,5) 
-            : "00:00";
+            <tbody id="userAvailabilityBody" style="background: #ffffff;"></tbody>
+        </table>
+    </div>
+</div>
 
-        fetch("{{ route('trainer.availability.store') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                trainer_name: trainerName,
-                activity: title,
-                session_date: dateStr,
-                session_time: timeStr,
-                status: "available"
-            })
-        })
+
+<script>
+const trainerName = "{{ Auth::guard('trainer')->user()->name ?? '' }}";
+
+// Fungsi untuk load events trainer (boleh dipanggil semula)
+function loadTrainerEvents() {
+    fetch("/trainer/events")
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                calendar.refetchEvents(); // ← refresh lepas save
-            }
+            let tbody = document.getElementById("trainerBody");
+            if (!tbody) return; 
+            tbody.innerHTML = "";
+         data.forEach(session => {
+    let row = `
+        <tr style="border-bottom: 1px solid #eef0f2;">
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568; width: 20%; box-sizing: border-box;">${session.title}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568; width: 25%; box-sizing: border-box;">${new Date(session.start).toLocaleDateString()}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568; width: 15%; box-sizing: border-box;">${new Date(session.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568; width: 20%; box-sizing: border-box;">Available</td>
+            <td style="padding: 16px 20px; white-space: nowrap; width: 20%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; width: 100%;">
+                    <button onclick="deleteSession(${session.id})" style="width: 100%; max-width: 120px;">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `;
+    tbody.innerHTML += row;
+});
+ });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Load availability bila page dibuka
+    loadTrainerEvents();
+
+    // Submit Add Availability
+    const form = document.getElementById('addAvailabilityForm');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+
+            e.preventDefault();
+
+            let formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+
+                if (data.success) {
+
+                    alert(data.message);
+
+                    form.reset();
+
+                    loadTrainerEvents();
+
+                } else {
+
+                    alert('Gagal menyimpan data.');
+
+                }
+
+            })
+            .catch(err => {
+
+                console.error(err);
+                alert('Ralat semasa menghantar data.');
+
+            });
+
         });
     }
-    calendar.unselect();
-},
 
-        eventClick: function(arg) {
-    if (confirm('Are you sure you want to delete this session?')) {
-        fetch('/trainer/availability/' + arg.event.id, {
+});
+
+
+// Load Trainer Availability Table
+function loadTrainerEvents()
+{
+    fetch('/trainer/availability-table')
+        .then(res => res.json())
+        .then(data => {
+
+            const tbody = document.getElementById('userAvailabilityBody');
+
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+
+                let row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${item.trainer_name}</td>
+                    <td>${item.activity}</td>
+                    <td>${item.date}</td>
+                    <td>${item.start_time} - ${item.end_time}</td>
+                    <td>
+                        ${item.status}
+                        <button
+                            onclick="deleteSession(${item.id})"
+                            style="
+                                margin-left:10px;
+                                background:#dc3545;
+                                color:white;
+                                border:none;
+                                padding:4px 8px;
+                                border-radius:5px;
+                                cursor:pointer;
+                            ">
+                            Delete
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+
+            });
+
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+
+// Delete Availability
+window.deleteSession = function(id)
+{
+    if(confirm("Padam availability ini?"))
+    {
+        fetch('/trainer/availability/' + id, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             }
         })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                arg.event.remove();
-                calendar.refetchEvents();
+
+            if(data.success)
+            {
+                alert('Deleted');
+                loadTrainerEvents();
             }
+
         });
     }
-},
-
-        events: "{{ route('trainer.my.events') }}", // hanya availability jurulatih
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            meridiem: false
-        }
-    });
-    
-    calendar.render();
-});
+}
 </script>
-
-
-</body>
-</html>

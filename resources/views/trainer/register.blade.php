@@ -41,16 +41,16 @@
     }
 
     /* Subtitle description helper */
-    .register-container::before {
-        content: "Create your credentials to manage your gym sessions";
-        display: block;
-        text-align: center;
-        color: #64748b;
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 28px;
-    }
-
+   .register-container::before {
+    content: "REGISTER TRAINER";
+    display: block;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: bold; /* Change from 500 to bold */
+    margin-bottom: 28px;
+   
+}
     .form-group {
         margin-bottom: 20px;
     }

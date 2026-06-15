@@ -16,11 +16,9 @@ use App\Http\Controllers\Admin\AdminTrainerBookingController;
 use App\Http\Controllers\Admin\AdminMembershipController;
 use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminEquipmentController;
-use App\Http\Controllers\Admin\AdminFeedbackController;
 use App\Http\Controllers\Admin\TrainerController; // Corrected Path
 
 // Other Controllers
-use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\FitnessTrainerController;
 use App\Http\Controllers\EquipmentReportController;
 use App\Http\Controllers\PaymentController;
@@ -30,6 +28,7 @@ use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\TrainerDashboardController;
 use App\Http\Controllers\TrainerAuthController;
 use App\Http\Controllers\TrainerSessionController;
+
 
 
 /* --- 1. PUBLIC AUTH ROUTES --- */
@@ -45,10 +44,17 @@ Route::post('/login', [AdminLoginController::class, 'login'])->name('login.submi
 Route::get('/trainer/login', [TrainerAuthController::class, 'showLoginForm'])->name('trainer.login');
 Route::post('/trainer/login', [TrainerAuthController::class, 'login'])->name('trainer.login.submit');
 Route::post('/trainer/logout', [TrainerAuthController::class, 'logout'])->name('trainer.logout');
+Route::get('/trainer/register', [TrainerAuthController::class, 'showRegisterForm'])
+    ->name('trainer.register');
+
+Route::post('/trainer/register', [TrainerAuthController::class, 'register'])->name('trainer.register.submit');
 
 // Admin login
 Route::get('/admin/login', [AdminLoginController::class, 'showAdminLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'adminLogin'])->name('admin.login.submit');
+
+// Admin logout
+Route::post('/admin/logout', [AdminLoginController::class, 'adminLogout'])->name('admin.logout');
 
 /* --- FORGOT PASSWORD SYSTEM --- */
 
@@ -172,27 +178,28 @@ Route::middleware(['auth:web', 'role:user'])->group(function () {
 
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::post('/membership/renew', [MembershipController::class, 'renew'])->name('membership.renew');
 
-    Route::get('/verify-member/{token}', function ($token) {
-        //
-    })->name('member.verify');
-
+   Route::get('/verify-member/{token}', [MembershipController::class, 'verifyMembership'])
+    ->name('member.verify');
     Route::get('/equipment-report', [EquipmentReportController::class, 'index'])->name('equipment.report.index');
     Route::post('/equipment-report/store', [EquipmentReportController::class, 'store'])->name('equipment.report.store');
     Route::put('equipment-report/update/{id}', [EquipmentReportController::class, 'update'])->name('equipment.report.update');
     Route::delete('/equipment-report/delete/{id}', [EquipmentReportController::class, 'destroy'])->name('equipment.report.delete');
 
-    Route::get('/payment-history', [PaymentController::class, 'index'])->name('payment_history');
+   Route::get('/payment-history', [PaymentController::class, 'index'])
+    ->name('payment_history');
+   Route::post('/payment/pay', [PaymentController::class, 'pay'])->name('payment.pay');
+Route::get('/payment/callback', [PaymentController::class, 'callback'])->name('payment.callback');
+Route::post('/payment/upload-receipt', [PaymentController::class, 'uploadReceipt'])->name('payment.upload.receipt');
+
+
+Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.return');
 
     Route::get('/fitnesstrainer', [FitnessTrainerController::class, 'index'])->name('fitnesstrainer');
     Route::post('/fitnesstrainer/store', [FitnessTrainerController::class, 'store'])->name('fitnesstrainer.store');
     Route::put('/fitnesstrainer/update/{id}', [FitnessTrainerController::class, 'update'])->name('fitnesstrainer.update');
     Route::delete('/fitnesstrainer/delete/{id}', [FitnessTrainerController::class, 'destroy'])->name('fitnesstrainer.delete');
 
-    Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index.user');
-    Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
-    Route::delete('/feedback/{id}', [FeedbackController::class, 'delete'])->name('feedback.delete');
 });
 
 
@@ -200,44 +207,109 @@ Route::middleware(['auth:web', 'role:user'])->group(function () {
 
 Route::middleware(['auth:trainer'])->group(function () {
     Route::get('/trainer/dashboard', [TrainerDashboardController::class, 'index'])->name('trainer.dashboard');
+
+    
 });
 
-/* --- 3. ADMIN MODULE --- */
+Route::get('/trainer/sessions', [TrainerSessionController::class, 'index'])
+    ->name('trainer.session.index');
+
+Route::get('/trainer/profile', [FitnessTrainerController::class, 'profile'])
+    ->name('trainer.profile');
+
+Route::put('/trainer/profile/{id}', [FitnessTrainerController::class, 'updateProfile'])
+    ->name('trainer.profile.update');
+
+Route::post('/trainer/availability', [TrainerSessionController::class, 'storeAvailability'])
+    ->name('trainer.availability.store');
+
+Route::get('/trainer/events', [TrainerSessionController::class, 'getEvents'])->name('trainer.events');
+
+Route::delete('/trainer/availability/{id}', [TrainerSessionController::class, 'destroyAvailability'])
+    ->name('trainer.availability.destroy');
+
+Route::get('/trainers/availability/{trainerName}', [TrainerSessionController::class, 'getTrainerAvailability'])->name('trainers.availability');
+   
+Route::get('/trainer/availability-table', [TrainerSessionController::class, 'getAvailabilityTable']);
+
+ Route::delete('/trainer/availability/{id}', [TrainerSessionController::class, 'destroyAvailability']);
+
+
+Route::put('/trainer/bookings/{id}/status', [AdminTrainerBookingController::class, 'updateStatus'])
+    ->name('trainer.bookings.updateStatus');
+
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
 
     Route::middleware(['auth:admin'])->group(function () {
 
-        Route::get('/dashboard', [AdminAuthController::class, 'dashboard'])->name('dashboard');
-        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', [AdminAuthController::class, 'dashboard'])
+            ->name('dashboard');
 
-        Route::get('/trainer-bookings', [AdminTrainerBookingController::class, 'index'])->name('trainer_bookings.index');
-        Route::patch('/trainer-bookings/{id}/status', [AdminTrainerBookingController::class, 'updateStatus'])->name('trainer_bookings.status');
-        Route::delete('/trainer-bookings/{id}', [AdminTrainerBookingController::class, 'destroy'])->name('trainer-bookings.destroy');
+        // FIXED: GET -> POST
+        Route::post('/logout', function () {
 
-        Route::get('trainers-list', [AdminAuthController::class, 'showTrainers'])->name('trainers.index');
-        Route::delete('trainers/{id}', [TrainerController::class, 'destroy'])->name('trainers.destroy');
+            Auth::guard('admin')->logout();
 
-        Route::get('/equipment-reports', [AdminEquipmentController::class, 'index'])->name('equipment.index');
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
 
-        Route::get('/members', [AdminMembershipController::class, 'index'])->name('members.index');
+            return redirect('/login');
 
-        // FIXED VERIFY ROUTE
-        Route::post('/members/{id}/verify', [AdminMembershipController::class, 'verify'])
-            ->name('members.verify');
+        })->name('logout');
 
-        Route::delete('/members/{id}', [AdminMembershipController::class, 'delete'])->name('members.delete');
+        Route::get('/trainer-bookings', [AdminTrainerBookingController::class, 'index'])
+            ->name('trainer_bookings.index');
 
-        Route::post('/members/{id}/renew', [AdminMembershipController::class, 'renew'])->name('admin.members.renew');
+        Route::patch('/trainer-bookings/{id}/status', [AdminTrainerBookingController::class, 'updateStatus'])
+            ->name('trainer_bookings.status');
 
-        Route::get('/member/scan/{id}', [AdminMembershipController::class, 'scanMember'])
-            ->name('admin.member.scan');
+        Route::delete('/trainer-bookings/{id}', [AdminTrainerBookingController::class, 'destroy'])
+            ->name('trainer-bookings.destroy');
 
-        Route::get('/members/{id}/activate', [AdminMembershipController::class, 'activateMembership'])
-            ->name('members.activate');
+        Route::get('trainers-list', [AdminAuthController::class, 'showTrainers'])
+            ->name('trainers.index');
 
-        Route::get('/payments-report', [AdminPaymentController::class, 'index'])->name('payments.index');
+        Route::delete('trainers/{id}', [TrainerController::class, 'destroy'])
+            ->name('trainers.destroy');
+
+        Route::get('/equipment-reports', [AdminEquipmentController::class, 'index'])
+            ->name('equipment.index');
+
+        Route::put('/equipment-reports/{id}/status', [AdminEquipmentController::class, 'update'])
+            ->name('equipment.update');
+
+        Route::delete('/equipment-reports/{id}', [AdminEquipmentController::class, 'destroy'])
+            ->name('equipment.destroy');
+
+        Route::get('/members', [AdminMembershipController::class, 'index'])
+            ->name('members.index');
+
+        Route::delete('/members/{id}', [AdminMembershipController::class, 'delete'])
+            ->name('members.delete');
+
+        Route::post('/members/{id}/renew', [AdminMembershipController::class, 'renew'])
+            ->name('members.renew');
+
+       Route::post('/members/{id}/activate', [AdminMembershipController::class, 'activateMembership'])
+    ->name('members.activate');
+
+        Route::get('/payments-report', [AdminPaymentController::class, 'index'])
+            ->name('payments.index');
+
+        Route::get('/payments', [AdminPaymentController::class, 'index'])
+            ->name('admin.payments');
+
+        Route::post('/payments/{id}/approve', [AdminPaymentController::class, 'approve'])
+            ->name('payments.approve');
+
+        Route::delete('/payments/{id}/delete', [AdminPaymentController::class, 'deleteReceipt'])
+            ->name('payments.delete');
+
+        Route::delete('/payments/{id}/destroy', [AdminPaymentController::class, 'destroy'])
+            ->name('payments.destroy');
     });
+
 });
 // Note: trainer.logout is already defined above (line 47) — duplicate removed here
 

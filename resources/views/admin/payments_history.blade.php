@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment history | Push N Pull</title>
+    <title>Payment history | Unique Plus Gym</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -148,6 +148,40 @@
             background: #fff7ed;
             color: #9a3412;
         }
+
+        .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-paid {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pending {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.badge-failed {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-unknown {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.empty-row {
+    text-align: center;
+    color: #94a3b8;
+    padding: 24px 0;
+}
     </style>
 </head>
 <body>
@@ -195,17 +229,14 @@
             </a>
         </li>
 
-      
- 
 
-        <li style="margin-top: auto;">
-            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #ff4d4d;">
-                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-        </li>
+   <form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <button type="submit"
+            style="background:none;border:none;color:#ff4d4d;cursor:pointer;">
+        Logout
+    </button>
+</form>
     </ul>
 </nav>
 
@@ -241,40 +272,105 @@
                     <th style="padding: 15px; color: #718096; font-size: 13px;">PAYMENT METHOD</th>
                     <th style="padding: 15px; color: #718096; font-size: 13px;">AMOUNT (RM)</th>
                     <th style="padding: 15px; color: #718096; font-size: 13px;">STATUS</th>
+                     <th style="padding: 15px; color: #718096; font-size: 13px;">ACTION</th>
+
                 </tr>
             </thead>
-            <tbody>
-                @forelse($payments as $payment)
-                <tr style="border-bottom: 1px solid #edf2f7;">
-                    <td style="padding: 15px;">{{ $payment->id ?: '-' }}</td>
-                    <td style="padding: 15px; font-weight: 600;">{{ $payment->user ?: '' }}</td>
-                    <td style="padding: 15px;">{{ $payment->plan ?: '' }}</td>
-                    <td style="padding: 15px;">{{ $payment->method ?: '' }}</td>
-                    <td style="padding: 15px; font-weight: 700;">{{ $payment->amount ?: '0.00' }}</td>
-                    <td style="padding: 15px;">
-                        @if($payment->status)
-<span style="
-    padding: 5px 12px; 
-    border-radius: 20px; 
-    font-size: 11px; 
-    font-weight: 800;
-    text-transform: uppercase;
-    background: '{{ $payment->status == 'paid' ? '#d4edda' : '#fff3cd' }}';
-    color: '{{ $payment->status == 'paid' ? '#155724' : '#856404' }}';
-">
-    {{ $payment->status }}
-</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: #a0aec0;">
-                        No payment records currently available.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
+ <tbody>
+    @forelse ($payments as $payment)
+    <tr>
+        {{-- TRANSACTION ID --}}
+        <td>{{ $payment->transaction_id ?? 'N/A' }}</td>
+
+        {{-- MEMBER NAME --}}
+        <td>{{ $payment->user->name ?? 'Unknown' }}</td>
+
+        {{-- MEMBERSHIP PLAN --}}
+        <td>
+            @switch(strtolower($payment->plan))
+                @case('walkin')  Walk-in  @break
+                @case('monthly') Monthly  @break
+                @case('yearly')  Yearly   @break
+                @default         {{ $payment->plan }}
+            @endswitch
+        </td>
+
+        {{-- PAYMENT METHOD --}}
+        <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
+
+        {{-- AMOUNT (RM) --}}
+        <td>RM {{ number_format($payment->amount, 2) }}</td>
+
+        {{-- STATUS --}}
+        <td>
+            @switch(strtolower($payment->status))
+                @case('paid')
+                    <span class="badge badge-paid">Paid</span>
+                    @break
+                @case('pending')
+                    <span class="badge badge-pending">Pending</span>
+                    @break
+                @case('failed')
+                    <span class="badge badge-failed">Failed</span>
+                    @break
+                @default
+                    <span class="badge badge-unknown">{{ $payment->status }}</span>
+            @endswitch
+        </td>
+
+ <td style="padding:15px;">
+    @if($payment->receipt_path)
+        <!-- View Receipt -->
+        <a href="{{ asset('storage/' . $payment->receipt_path) }}" target="_blank"
+           style="padding:5px 10px; background:#ebf8ff; color:#2b6cb0; border-radius:6px; font-size:12px; text-decoration:none; margin-right:5px;">
+            <i class="fa fa-eye"></i> Receipt
+        </a>
+
+        <!-- Approve -->
+        @if($payment->status !== 'Paid')
+    <form action="{{ route('admin.payments.approve', $payment->id) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit"
+                style="padding:5px 10px; background:#d4edda; color:#155724; border:none; border-radius:6px; font-size:12px; cursor:pointer; margin-right:5px;">
+                <i class="fa fa-check"></i> Approve
+            </button>
+        </form>
+        @endif
+
+        <!-- Delete Receipt -->
+        <form action="{{ route('admin.payments.delete', $payment->id) }}" method="POST" style="display:inline;"
+              onsubmit="return confirm('Delete this receipt?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                style="padding:5px 10px; background:#fee2e2; color:#991b1b; border:none; border-radius:6px; font-size:12px; cursor:pointer;">
+                <i class="fa fa-trash"></i> Delete Receipt
+            </button>
+        </form>
+    @else
+        <span style="color:#a0aec0; font-size:12px;">No receipt</span>
+    @endif
+
+    <!-- DELETE PAYMENT RECORD - always visible -->
+   <form action="{{route('admin.payments.destroy', $payment->id) }}" method="POST" style="display:inline;"
+      onsubmit="return confirm('Permanently delete this payment record?')">
+        @csrf
+        @method('DELETE')
+        <button type="submit"
+            style="padding:5px 10px; background:#1a202c; color:white; border:none; border-radius:6px; font-size:12px; cursor:pointer; margin-left:5px;">
+            <i class="fa fa-trash"></i> Delete Record
+        </button>
+    </form>
+</td>
+ </tr>
+    @empty
+    <tr>
+        <td colspan="7" class="empty-row">No payment records currently available.</td>
+    </tr>
+    @endforelse
+</tbody>
+    
+
         </table>
     </div>
 </div>

@@ -11,8 +11,7 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         // Get the currently authenticated user
-        $user = Auth::user();  
-
+          $user = User::find(Auth::id());
         // Handle background image upload
         if ($request->hasFile('background')) {
             $path = $request->file('background')->store('backgrounds', 'public');

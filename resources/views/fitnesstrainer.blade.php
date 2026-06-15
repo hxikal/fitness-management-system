@@ -241,12 +241,12 @@
 <body>
 
     <nav>
-        <a href="{{ route('user.dashboard') }}" class="logo">
+        <a href="{{ route('userdashboard') }}" class="logo">
            <img src="{{ asset('image/gym.jpg') }}" alt="Logo">
            <span>Unique Plus Gym</span>
         </a>
         <ul>
-            <li><a href="{{ route('user.dashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+            <li><a href="{{ route('userdashboard') }}"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
             <li><a href="{{ route('membership.info') }}"><i class="fas fa-qrcode"></i> <span>Membership info</span></a></li> 
             <li><a href="{{ route('payment_history') }}"><i class="fas fa-file-invoice-dollar"></i> <span>Payment</span></a></li> 
             <li><a href="{{ route('equipment.report.index') }}"><i class="fas fa-tools"></i> <span>Equipment Report</span></a></li> 
@@ -301,10 +301,7 @@
                         </div>
 
                         <div>
-                            <button class="trainer-status" onclick="toggleAvailability('availability-{{ $jsKey }}', '{{ $jsKey }}')">
-                                Check Availability
-                            </button>
-
+  
                             <div id="availability-{{ $jsKey }}" class="availability-display">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <span id="month-year-{{ $jsKey }}" style="font-weight: bold; font-size: 13px; color: #1a202c;"></span>
@@ -476,141 +473,77 @@
         </div>
     </div>
 
-<div id="userCalendar"></div>
-<div id="calendar" style="max-width: 900px; margin: 0 auto; padding: 20px 0;"></div>
-
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
-
+<div id="userCalendar" data-trainers='@json($trainers->pluck("name"))' style="max-width: 100%; margin: 20px auto; padding: 24px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eef0f2;">
+    <h3 style="font-family: sans-serif; color: #1a1a1a; margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; font-weight: 700;">Trainer Availability</h3>
+    <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-family: sans-serif; text-align: left; white-space: nowrap;" cellpadding="14">
+            <thead>
+                <tr style="background:#f8f9fa; color: #495057; border-bottom: 2px solid #dee2e6;">
+                    <th style="border: 1px solid #eef0f2; padding: 14px; font-weight: 600; font-size: 0.95rem;">Trainer</th>
+                    <th style="border: 1px solid #eef0f2; padding: 14px; font-weight: 600; font-size: 0.95rem;">Activity</th>
+                    <th style="border: 1px solid #eef0f2; padding: 14px; font-weight: 600; font-size: 0.95rem;">Date</th>
+                    <th style="border: 1px solid #eef0f2; padding: 14px; font-weight: 600; font-size: 0.95rem;">Time</th>
+                    <th style="border: 1px solid #eef0f2; padding: 14px; font-weight: 600; font-size: 0.95rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="userAvailabilityBody" style="color: #4a5568; font-size: 0.95rem;"></tbody>
+        </table>
+    </div>
+</div>
+</div>
 <script>
-// --- SECTION 1: GLOBAL LAYOUT TOGGLES ---
-function toggleAvailability() {
-    const calendarContainer = document.getElementById('userCalendar');
 
-    if (calendarContainer.style.display === 'none' || calendarContainer.style.display === '') {
-        calendarContainer.style.display = 'block';
+function toggleAvailability(trainerName) {
+    const calendar = document.getElementById('userCalendar');
+    
+    // Toggle display visibility
+    if (calendar.style.display === 'none' || calendar.style.display === '') {
+        calendar.style.display = 'block';
+        // Optional: Smoothly scroll down to the availability view
+        calendar.scrollIntoView({ behavior: 'smooth' });
     } else {
-        calendarContainer.style.display = 'none';
-        return;
+        // If clicking a different trainer, you might want to keep it open and just refresh data
+        calendar.style.display = 'block';
     }
+}
 
-    if (calendarInitialized && window._fcInstance) {
-        // ✅ KEY FIX: refetch events every time calendar is shown
-        window._fcInstance.refetchEvents();
-        return;
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    let tbody = document.getElementById("userAvailabilityBody");
+    tbody.innerHTML = "";
 
-    calendarInitialized = true;
+    let trainerNames = JSON.parse(document.getElementById('userCalendar').dataset.trainers);
 
- document.addEventListener('DOMContentLoaded', function() {
-    var calendarContainer = document.getElementById('userCalendar');
-
-    var calendar = new FullCalendar.Calendar(calendarContainer, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        events: "{{ route('trainers.availability') }}", // hanya availability jurulatih
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            meridiem: false
-        },
-        eventClick: function(info) {
-            let props = info.event.extendedProps;
-
-            alert(
-                'Trainer: ' + props.trainer_name +
-                '\nActivity: ' + info.event.title +
-                '\nStatus: ' + props.status +
-                '\nDate: ' + props.session_date +
-                '\nTime: ' + props.session_time
-            );
-        }
-    });
-
-    calendar.render();
+    trainerNames.forEach(function(trainerName) {
+        fetch("/trainers/availability/" + encodeURIComponent(trainerName))
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(session => {
+    let props = session.extendedProps || {};
+    let row = `
+        <tr style="border-bottom: 1px solid #eef0f2;">
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568;">${props.trainer_name ?? trainerName}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568;">${session.title}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568;">${new Date(session.start).toLocaleDateString()}</td>
+            <td style="padding: 16px 20px; white-space: nowrap; color: #4a5568;">
+                ${new Date(session.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} 
+                - ${new Date(session.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+            </td>
+            <td style="padding: 16px 20px; white-space: nowrap;"><span style="color: #28a745; font-weight: 600;">${props.status ?? ''}</span></td>
+        </tr>
+    `;
+    tbody.innerHTML += row;
 });
-    window._fcInstance = calendar;  // ✅ Store reference globally
-}
-function showTrainerAvailability(trainerId) {
-    var section = document.getElementById("availability-section");
-    if (section) {
-        section.style.display = "block";
-        section.scrollIntoView({ behavior: 'smooth' });
-    }
-    console.log("Fetching availability for: " + trainerId);
-}
-
-function showOtherTrainers() {
-    let trainersDiv = document.getElementById('other-trainers');
-    if (trainersDiv) {
-        trainersDiv.style.display = (trainersDiv.style.display === 'none') ? 'block' : 'none';
-    }
-}
-
-let calendarInitialized = false;
-
-function toggleAvailability() {
-
-    const calendarContainer = document.getElementById('userCalendar');
-
-    // Show/Hide calendar
-    if (calendarContainer.style.display === 'none') {
-        calendarContainer.style.display = 'block';
-    } else {
-        calendarContainer.style.display = 'none';
-        return;
-    }
-
-    // Prevent creating multiple calendars
-    if (calendarInitialized) {
-        return;
-    }
-
-    calendarInitialized = true;
-
-    var calendar = new FullCalendar.Calendar(calendarContainer, {
-        initialView: 'dayGridMonth',
-
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-
-       events: "{{ route('trainers.availability') }}",
-
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            meridiem: false
-        },
-
-        eventClick: function(info) {
-
-            alert(
-                'Trainer: ' + info.event.extendedProps.trainer_name +
-                '\nActivity: ' + info.event.title +
-                '\nStatus: ' + info.event.extendedProps.status +
-                '\nDate: ' + info.event.start.toLocaleString()
-            );
-
-        }
+            })
+            .catch(err => console.error("Gagal fetch availability untuk " + trainerName, err));
     });
+});
 
-    calendar.render();
-}
-
-
-
-// --- SECTION 4: MODALS & CRUD FORMS ---
+// --- MODALS & CRUD (UNCHANGED) ---
 function openBooking(name) {
     const modal = document.getElementById('bookingModal');
     const nameText = document.getElementById('modalTrainerName');
     const nameInput = document.getElementById('inputTrainerName');
-    
+
     if(modal) modal.style.display = 'block';
     if(nameText) nameText.innerText = 'Tempah ' + name;
     if(nameInput) nameInput.value = name;
@@ -654,20 +587,20 @@ function deleteRowUI(id) {
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
-        
+
         const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden'; 
-        csrfInput.name = '_token'; 
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
         csrfInput.value = csrfToken;
 
         const methodInput = document.createElement('input');
-        methodInput.type = 'hidden'; 
-        methodInput.name = '_method'; 
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
         methodInput.value = 'DELETE';
 
-        form.appendChild(csrfInput); 
+        form.appendChild(csrfInput);
         form.appendChild(methodInput);
-        document.body.appendChild(form); 
+        document.body.appendChild(form);
         form.submit();
     }
 }
