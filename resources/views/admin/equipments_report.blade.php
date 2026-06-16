@@ -277,6 +277,7 @@ tbody tr:hover {
    <form action="{{ route('admin.equipment.destroy', $report->id) }}" method="POST"
       onsubmit="return confirm('Are you sure you want to delete this report?');">
     @csrf
+    @method('DELETE')
         <button type="submit" style="background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
             Delete
         </button>

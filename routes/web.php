@@ -179,7 +179,7 @@ Route::middleware(['auth:web', 'role:user'])->group(function () {
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
 
-   Route::get('/verify-member/{token}', [MembershipController::class, 'verifyMembership'])
+   Route::get('/verify-member/{id}', [MembershipController::class, 'verifyMembership'])
     ->name('member.verify');
     Route::get('/equipment-report', [EquipmentReportController::class, 'index'])->name('equipment.report.index');
     Route::post('/equipment-report/store', [EquipmentReportController::class, 'store'])->name('equipment.report.store');

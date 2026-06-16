@@ -5,23 +5,34 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User; // <--- DON'T FORGET THIS
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class MembershipController extends Controller
 {
-   public function verify($id)
-{
-    // Find user by their membership string (PNP-00016)
-    $user = User::where('membership_id', $id)->firstOrFail();
+    public function verifyMembership($id)
+    {
+        $user = User::findOrFail($id);
 
-    // ONLY now do we set the status and the expiry date
-    $user->update([
-        'is_active' => true,
-        'status' => 'active',
-        'membership_expiry' => now()->addDays(30), // Expiry is set ONLY upon scan
-    ]);
+        $user->is_active = 1;
 
-    return "Verification Successful! " . $user->name . " is now active.";
-}
+        if (Schema::hasColumn('users', 'membership_start')) {
+            $user->membership_start = now();
+        }
 
-    // ... your other methods like renew()
+        if (Schema::hasColumn('users', 'status')) {
+            $user->status = 'active';
+        }
+
+        if (Schema::hasColumn('users', 'type') && empty($user->type)) {
+            $user->type = 'monthly';
+        }
+
+        if (Schema::hasColumn('users', 'membership_expiry')) {
+            $user->membership_expiry = now()->addDays(30);
+        }
+
+        $user->save();
+
+        return "Verification Successful! {$user->name} membership is now active until {$user->membership_expiry}.";
+    }
 }

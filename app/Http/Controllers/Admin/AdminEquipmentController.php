@@ -41,11 +41,16 @@ public function index()
 }
 
     // ✅ Admin can delete a report if needed
-    public function destroy($id)
-    {
-        $report = EquipmentReport::findOrFail($id);
+public function destroy($id)
+{
+    $report = EquipmentReport::find($id);
+
+    if ($report) {
         $report->delete();
 
-        return back()->with('success', 'Report deleted.');
+        return redirect('admin/equipment-reports')->with('success', 'Deleted successfully');
     }
+
+    return redirect('admin/equipment-reports')->with('error', 'Record already deleted or does not exist.');
+}
 }
