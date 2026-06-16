@@ -33,6 +33,6 @@ class MembershipController extends Controller
 
         $user->save();
 
-        return "Verification Successful! {$user->name} membership is now active until {$user->membership_expiry}.";
+        return view('membership.success', compact('user'));
     }
 }
