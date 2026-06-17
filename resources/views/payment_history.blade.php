@@ -276,13 +276,13 @@
      <div class="form-group">
                 <label>Available Payment Methods</label>
                 <div class="payment-methods">
-                    <div class="method-box">
+                    <div class="method-box active" data-method="Maybank DuitNow QR">
                         <i class="fa fa-university"></i><br>Maybank DuitNow QR
                     </div>
-                    <div class="method-box">
+                    <div class="method-box" data-method="Touch 'n Go eWallet">
                         <i class="fa fa-wallet"></i><br>Touch 'n Go eWallet
                     </div>
-                    <div class="method-box">
+                    <div class="method-box" data-method="Maybank Online Transfer">
                         <i class="fa fa-money-bill-transfer"></i><br>Maybank Online Transfer
                     </div>
                 </div>
@@ -367,7 +367,7 @@
             </a>
         </div>
     </div>
-<<!-- RIGHT: Order Summary -->
+<!-- RIGHT: Order Summary -->
     <div class="card">
         <h3><i class="fa fa-receipt"></i> Order Summary</h3>
         <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -396,8 +396,17 @@
     </div>
 </div>
 <script>
-let selectedMethod = 'Banking';
+let selectedMethod = document.querySelector('.method-box.active')?.dataset.method || 'Maybank DuitNow QR';
 let currentPaymentId = null;
+
+document.querySelectorAll('.method-box').forEach(box => {
+    box.addEventListener('click', () => {
+        document.querySelectorAll('.method-box').forEach(method => method.classList.remove('active'));
+        box.classList.add('active');
+        selectedMethod = box.dataset.method;
+        document.getElementById('payment_method_input').value = selectedMethod;
+    });
+});
 
 function updateUI() {
     const select = document.getElementById('membership_type');
