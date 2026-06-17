@@ -273,6 +273,7 @@ tbody tr:hover {
             Fixed
         </option>
     </select>
+  </form>
 
    <form action="{{ route('admin.equipment.destroy', $report->id) }}" method="POST"
       onsubmit="return confirm('Are you sure you want to delete this report?');">
