@@ -237,22 +237,14 @@ tbody tr:hover {
         <td style="padding: 15px;">{{ preg_replace('/\[Image:.*?\]/', '', $report->description ) }}</td>
         
  <td style="padding: 15px;">
-    @php
-        // 1. Extract only the image path using regex
-        preg_match('/\[Image: (.*?)\]/', $report->description, $matches);
-        $imagePath = $matches[1] ?? null;
-    @endphp
-
-    {{-- Show the image thumbnail ONLY --}}
-    @if($imagePath)
-        <div style="margin-top: 8px;">
-            <a href="{{ asset('storage/' . $imagePath) }}" target="_blank">
-                <img src="{{ asset('storage/' . $imagePath) }}" 
-                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
-            </a>
-        </div>
+    @if(!empty($report->image))
+        <a href="{{ asset('storage/' . $report->image) }}" target="_blank">
+            <img src="{{ asset('storage/' . $report->image) }}"
+                 alt="Report Image"
+                 style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #ddd;">
+        </a>
     @else
-        <span style="color: #999;">No image</span>
+        <span style="color:#999;">No image</span>
     @endif
 </td>
         <td style="padding: 15px;">
