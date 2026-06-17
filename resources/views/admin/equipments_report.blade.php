@@ -238,8 +238,8 @@ tbody tr:hover {
         
  <td style="padding: 15px;">
     @if(!empty($report->image))
-        <a href="{{ asset('storage/' . $report->image) }}" target="_blank">
-            <img src="{{ asset('storage/' . $report->image) }}"
+        <a href="{{ asset($report->image) }}" target="_blank">
+            <img src="{{ asset($report->image) }}"
                  alt="Report Image"
                  style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #ddd;">
         </a>

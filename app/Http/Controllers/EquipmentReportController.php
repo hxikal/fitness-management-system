@@ -48,9 +48,15 @@ public function store(Request $request)
 
     $filename = time() . '_' . $file->getClientOriginalName();
 
-    $path = $file->storeAs('reports', $filename, 'public');
+    $uploadPath = public_path('uploads/reports');
 
-    $report->image = $path;
+    if (!is_dir($uploadPath)) {
+        mkdir($uploadPath, 0755, true);
+    }
+
+    $file->move($uploadPath, $filename);
+
+    $report->image = 'uploads/reports/' . $filename;
 }
     $report->status = 'pending';
     $report->save();
@@ -67,9 +73,19 @@ public function update(Request $request, $id)
 
 if ($request->hasFile('image')) {
 
-    $path = $request->file('image')->store('reports', 'public');
+    $file = $request->file('image');
 
-    $report->image = $path;
+    $filename = time() . '_' . $file->getClientOriginalName();
+
+    $uploadPath = public_path('uploads/reports');
+
+    if (!is_dir($uploadPath)) {
+        mkdir($uploadPath, 0755, true);
+    }
+
+    $file->move($uploadPath, $filename);
+
+    $report->image = 'uploads/reports/' . $filename;
 }
 
     $report->save();

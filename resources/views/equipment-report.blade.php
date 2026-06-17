@@ -456,7 +456,7 @@ th:nth-child(7), td:nth-child(7) { width: 13%; }
 
                  <td>
     @if($report->image)
-        <img src="{{ asset('storage/' . $report->image) }}"
+        <img src="{{ asset($report->image) }}"
              alt="Report Image"
              style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">
     @else
